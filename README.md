@@ -36,10 +36,15 @@ messenger-project/
 │
 
 ├── auth_service/        # Authentifizierung & Nutzerverwaltung
+
 ├── user_service/        # Nutzerprofile & Kontakte
+
 ├── messaging_service/   # Chat & Messaging
+
 ├── shared/              # Gemeinsame Hilfsfunktionen
+
 ├── frontend/            # React PWA
+
 └── README.md
 
 
