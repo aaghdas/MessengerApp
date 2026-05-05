@@ -20,7 +20,7 @@ Perfect for developers interested in microservices, real-time WebSocket communic
 - **Authentication:** JWT (JSON Web Tokens)
 - **Frontend:** React.js as a Progressive Web App (PWA)
 - **WebSocket:** For real-time chat communication
-- **Deployment:** Free hosting services (e.g., Railway, Vercel, Render)
+- **Deployment:** AWS
 
 ## Features
 
