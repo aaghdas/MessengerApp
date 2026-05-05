@@ -34,6 +34,7 @@ Perfect for developers interested in microservices, real-time WebSocket communic
 ## Project Structure
 messenger-project/
 │
+
 ├── auth_service/        # Authentifizierung & Nutzerverwaltung
 ├── user_service/        # Nutzerprofile & Kontakte
 ├── messaging_service/   # Chat & Messaging
