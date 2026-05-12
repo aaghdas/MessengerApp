@@ -40,3 +40,24 @@ def create_access_token(data: dict) -> str:
     )
 
     return encoded_jwt
+
+
+# Prüft ein JWT Access Token und gibt die Benutzer-ID zurück.
+# Bei ungültigem, abgelaufenem oder fehlerhaftem Token wird None zurückgegeben.
+def decode_access_token(token: str) -> int | None:
+    try:
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
+        )
+
+        user_id = payload.get("sub")
+
+        if user_id is None:
+            return None
+
+        return int(user_id)
+
+    except (JWTError, ValueError):
+        return None

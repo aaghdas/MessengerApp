@@ -1,3 +1,4 @@
+#routes.py enthält die Funktionen, die auf HTTP-Anfragen wie Login, Register und Current User reagieren.Also enthält alle funktionen, die die API-Anfragen bearbeiten.
 #Dies ist ein Objekt der FastAPI-Klasse APIRouter
 #APIRouter ermöglicht es, Routen in modularen Einheiten zu organisieren.
 #Hier werden später die Endpoints für die Authentifizierung definiert.
@@ -6,17 +7,18 @@
 # In diesem Fall werden alle Authentifizierungs-Routen wie Registrierung, Login und aktueller Benutzer in routes.py gesammelt.
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+#from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+#from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
+#from app.config import settings
 from app.database import get_db
 from app.models import User
 from app.schemas import TokenResponse, UserLogin, UserRegister, UserResponse
 from app.security import create_access_token, hash_password, verify_password
-
+# from app.security importdecode_access_token
+from app.dependencies import get_current_auth_user
 
 # APIRouter sammelt die Auth-Endpunkte in einer eigenen Router-Gruppe.
 # Alle Routen in dieser Datei beginnen mit /auth.
@@ -27,7 +29,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 # HTTPBearer liest den Authorization-Header aus.
 # Erwartetes Format:
 # Authorization: Bearer <token>
-bearer_scheme = HTTPBearer()
+#bearer_scheme = HTTPBearer()    jetzt in dependencies.py
 
 
 # Registrierung eines neuen Benutzers.
@@ -123,9 +125,10 @@ async def login_user(
 
     return TokenResponse(access_token=access_token)
 
-
+"""
 # Gibt den aktuell eingeloggten Benutzer zurück.
 # Dafür muss ein gültiges Bearer Token im Authorization-Header gesendet werden.
+
 @router.get("/current-user", response_model=UserResponse)
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
@@ -174,3 +177,72 @@ async def get_current_user(
         )
 
     return user
+"""
+#@router.get("/current-user", response_model=UserResponse) async def get_current_user(...) geändert.
+#Vorher war in routes.py alles direkt drin.Das heißt, routes.py musste selbst wissen, wie ein JWT geprüft wird.
+#in neue funktion wurde diese Arbeit nach security.py verschoben->in security.py:  decode_access_token(token)
+#Darum soll get_current_user() nicht mehr selbst jwt.decode(...) machen, sondern nur noch sagen: user_id = decode_access_token(token)
+"""
+Vorher routes.py macht zu viel: Route + Token prüfen + Token dekodieren + User suchen
+Nachher Aufgaben sind sauber getrennt:
+security.py → Token erstellen und prüfen
+routes.py → API-Anfragen bearbeiten und User aus DB holen
+"""
+
+"""
+# Gibt den aktuell eingeloggten Benutzer zurück.
+# Dafür muss ein gültiges Bearer Token im Authorization-Header gesendet werden.
+@router.get("/current-user", response_model=UserResponse)
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: AsyncSession = Depends(get_db),
+):
+    # Token wird aus dem Authorization-Header gelesen.
+    token = credentials.credentials
+
+    # Token wird geprüft und die Benutzer-ID wird aus dem Token gelesen.
+    user_id = decode_access_token(token)
+
+    # Wenn keine Benutzer-ID gelesen werden kann, ist das Token ungültig.
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token.",
+        )
+
+    # Benutzer wird anhand der ID aus dem Token in der Datenbank gesucht.
+    result = await db.execute(
+        select(User).where(User.id == user_id)
+    )
+    user = result.scalar_one_or_none()
+
+    # Falls kein Benutzer zur Token-ID existiert, wird 404 zurückgegeben.
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    return user
+"""
+
+
+"""
+Vorher war /auth/current-user verantwortlich für:
+Token lesen
+Token prüfen
+User-ID lesen
+User aus Datenbank holen
+User zurückgeben
+
+Jetzt ist die Route nur noch verantwortlich für: aktuellen User zurückgeben
+
+Die Auth-Logik ist zentral in: dependencies.py
+"""
+# Gibt den aktuell eingeloggten Benutzer zurück.
+# Die Token-Prüfung und das Laden des Benutzers werden über get_current_auth_user ausgeführt.
+@router.get("/current-user", response_model=UserResponse)
+async def get_current_user(
+    current_user: User = Depends(get_current_auth_user),
+):
+    return current_user
