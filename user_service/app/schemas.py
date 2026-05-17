@@ -13,13 +13,12 @@ from pydantic import BaseModel, Field
 
 
 # Schema zum Erstellen eines Profils.
-# Diese Daten werden vom Client an den User Service gesendet.
+# Die auth_user_id wird nicht vom Client gesendet, sondern aus dem JWT Access Token gelesen.
+#Bei POST /profiles soll auth_user_id nicht vom Client gesendet werden. Die ID kommt aus dem JWT-Token.
 class ProfileCreate(BaseModel):
-    auth_user_id: int
     display_name: str = Field(min_length=2, max_length=100)
     bio: str | None = Field(default=None, max_length=255)
     avatar_url: str | None = Field(default=None, max_length=500)
-
 
 # Schema zum Aktualisieren eines Profils.
 # Alle Felder sind optional, damit einzelne Profilwerte geändert werden können.
@@ -45,10 +44,10 @@ class ProfileResponse(BaseModel):
 
 
 # Schema zum Erstellen eines Kontakts.
-# owner_user_id ist der Benutzer, dem die Kontaktliste gehört.
+# owner_user_id wird nicht vom Client gesendet,
+# sondern aus dem JWT Access Token gelesen.
 # contact_user_id ist der Benutzer, der als Kontakt gespeichert wird.
 class ContactCreate(BaseModel):
-    owner_user_id: int
     contact_user_id: int
 
 
