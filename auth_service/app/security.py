@@ -4,6 +4,8 @@ from datetime import datetime, timedelta, timezone
 from jose import jwt
 from passlib.context import CryptContext
 from app.config import settings
+import secrets 
+# für die Generierung von sicheren Reset-Codes.secrets ist für sicherheitsrelevante Zufallswerte besser geeignet als random.
 
 
 # Passwort-Hashing-Kontext.
@@ -61,3 +63,9 @@ def decode_access_token(token: str) -> int | None:
 
     except (JWTError, ValueError):
         return None
+
+# Erstellt einen zufälligen numerischen Reset-Code.
+# Der Code wird aktuell für den Passwort-Reset in der Entwicklungs-/Abgabeversion genutzt.
+# Später kann die Zustellung über einen sicheren Kanal ergänzt werden.
+def create_password_reset_code() -> str:
+    return str(secrets.randbelow(900000) + 100000)

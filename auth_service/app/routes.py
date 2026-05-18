@@ -14,11 +14,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 #from app.config import settings
 from app.database import get_db
-from app.models import User
-from app.schemas import TokenResponse, UserLogin, UserRegister, UserResponse
-from app.security import create_access_token, hash_password, verify_password
+from app.models import PasswordResetCode, User
+from app.schemas import (
+    TokenResponse, 
+    UserLogin, 
+    UserRegister,
+     UserResponse,
+     PasswordResetConfirm,
+     PasswordResetRequest,
+     PasswordResetRequestResponse
+)
+from app.security import (
+    create_access_token, 
+    hash_password, 
+    verify_password,
+    create_password_reset_code)
 # from app.security importdecode_access_token
 from app.dependencies import get_current_auth_user
+from datetime import datetime, timedelta
+from app.models import PasswordResetCode, User
+
+
 
 # APIRouter sammelt die Auth-Endpunkte in einer eigenen Router-Gruppe.
 # Alle Routen in dieser Datei beginnen mit /auth.
@@ -246,3 +262,91 @@ async def get_current_user(
     current_user: User = Depends(get_current_auth_user),
 ):
     return current_user
+
+
+# Erstellt einen Passwort-Reset-Code für einen bestehenden Benutzer.
+# In dieser Entwicklungs-/Abgabeversion wird der Code direkt in der API-Response zurückgegeben.
+@router.post(
+    "/password-reset/request",
+    response_model=PasswordResetRequestResponse,
+)
+async def request_password_reset(
+    reset_data: PasswordResetRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(User).where(User.email == reset_data.email)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    reset_code = create_password_reset_code()
+    expires_at = datetime.utcnow() + timedelta(minutes=15)
+
+    password_reset_code = PasswordResetCode(
+        user_id=user.id,
+        code=reset_code,
+        expires_at=expires_at,
+    )
+
+    db.add(password_reset_code)
+    await db.commit()
+
+    return PasswordResetRequestResponse(
+        message="Password reset code created.",
+        reset_code=reset_code,
+    )
+
+
+# Bestätigt einen Passwort-Reset mit E-Mail, Reset-Code und neuem Passwort.
+# Der Code muss gültig, nicht abgelaufen und noch nicht benutzt sein.
+@router.post("/password-reset/confirm")
+async def confirm_password_reset(
+    reset_data: PasswordResetConfirm,
+    db: AsyncSession = Depends(get_db),
+):
+    user_result = await db.execute(
+        select(User).where(User.email == reset_data.email)
+    )
+    user = user_result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    code_result = await db.execute(
+        select(PasswordResetCode).where(
+            PasswordResetCode.user_id == user.id,
+            PasswordResetCode.code == reset_data.reset_code,
+            PasswordResetCode.is_used == False,
+        )
+    )
+    password_reset_code = code_result.scalar_one_or_none()
+
+    if not password_reset_code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid reset code.",
+        )
+
+    if password_reset_code.expires_at < datetime.utcnow():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reset code has expired.",
+        )
+
+    user.hashed_password = hash_password(reset_data.new_password)
+    password_reset_code.is_used = True
+
+    await db.commit()
+
+    return {
+        "message": "Password has been reset successfully."
+    }

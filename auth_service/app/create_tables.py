@@ -1,7 +1,6 @@
 import asyncio
-
 from app.database import Base, engine
-from app.models import User
+from app.models import User,PasswordResetCode
 
 
 # Erstellt alle Tabellen, die von SQLAlchemy-Modellen(models.py) beschrieben werden.
