@@ -165,3 +165,37 @@ Jeder Service besitzt seine eigene Datenbank.
 Der PostgreSQL-User für die lokale Entwicklung ist: postgres
 
 Das lokale Entwicklungs-Passwort ist in den .env Dateien gespeichert und durch .gitignore geschützt.
+
+## Passwort-Reset ohne E-Mail
+
+Im Auth Service wurde ein Passwort-Reset-Flow ohne E-Mail-Versand ergänzt.  
+Da diese Projektversion für Entwicklung und Abgabe gedacht ist, wird der Reset-Code aktuell direkt in der API-Response zurückgegeben. Dadurch kann der Flow vollständig über FastAPI Swagger UI getestet werden, ohne dass ein SMTP-Server oder E-Mail-Versand eingerichtet werden muss.
+
+In einer produktiven Version sollte der Reset-Code nicht direkt in der Response stehen. Stattdessen müsste er über einen sicheren Kanal zugestellt werden, zum Beispiel per E-Mail, Push-Nachricht oder einen anderen verifizierten Kommunikationsweg.
+
+### Ziel des Passwort-Reset-Flows
+
+Der Passwort-Reset soll ermöglichen, dass ein Benutzer ein neues Passwort setzen kann, ohne eingeloggt zu sein.
+
+Der Ablauf ist:
+
+1. Der Benutzer fordert einen Reset-Code mit seiner E-Mail-Adresse an.
+2. Das Backend prüft, ob ein Benutzer mit dieser E-Mail existiert.
+3. Das Backend erstellt einen zufälligen sechsstelligen Reset-Code.
+4. Der Reset-Code wird in der Datenbank gespeichert.
+5. Für diese Entwicklungs-/Abgabeversion wird der Reset-Code direkt in der API-Response zurückgegeben.
+6. Der Benutzer sendet E-Mail, Reset-Code und neues Passwort an den Confirm-Endpunkt.
+7. Das Backend prüft, ob der Code existiert, zum richtigen Benutzer gehört, noch nicht benutzt wurde und nicht abgelaufen ist.
+8. Das neue Passwort wird gehasht gespeichert.
+9. Der Reset-Code wird als benutzt markiert.
+10. Der Benutzer kann sich danach mit dem neuen Passwort einloggen.
+
+---
+
+## Neue Tabelle: `password_reset_codes`
+
+Für den Passwort-Reset wurde im Auth Service ein neues SQLAlchemy-Modell erstellt:
+
+```python
+class PasswordResetCode(Base):
+    __tablename__ = "password_reset_codes"
