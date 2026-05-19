@@ -6,8 +6,11 @@ from pydantic import BaseModel, EmailStr, Field
 #Schemas beschreiben, welche Daten eine API erwartet und welche Daten sie zurückgibt.
 # Schema für die Registrierung.Diese Daten werden vom Client beim Registrieren gesendet.
 class UserRegister(BaseModel):
+    #Field kommt von Pydantic und wird benutzt, um für ein Feld zusätzliche Regeln festzulegen, z.B. die minimale und maximale Länge eines Strings.
     username: str = Field(min_length=3, max_length=50)
-    email: EmailStr
+    #EmailStr ist ein spezieller Datentyp von Pydantic.Er prüft, ob ein Wert wie eine gültige E-Mail-Adresse aussieht.
+    #EmailStr ist ein Pydantic-Typ, der prüft, ob die eingegebene E-Mail-Adresse ein gültiges Format hat. Dadurch muss ich die E-Mail-Validierung nicht selbst schreiben.
+    email: EmailStr 
     password: str = Field(min_length=8, max_length=128)
 
 
@@ -18,8 +21,11 @@ class UserLogin(BaseModel):
     password: str
 
 
-# Schema für Benutzerdaten in API-Antworten.
+# Schema für Benutzerdaten in API-Antworten.Das bedeutet wenn die API einen User zurückgibt, werden nur diese Felder gezeigt:
 # Das Passwort oder hashed_password wird absichtlich nicht zurückgegeben.
+#Response Schemas kontrollieren, welche Daten die API zurückgibt. 
+#Zum Beispiel enthält die Datenbank beim User auch hashed_password, 
+#aber UserResponse gibt dieses Feld absichtlich nicht zurück. Dadurch werden sensible interne Daten geschützt.
 class UserResponse(BaseModel):
     id: int
     username: str

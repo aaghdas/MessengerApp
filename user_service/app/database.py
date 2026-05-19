@@ -38,6 +38,7 @@ expire_on_commit=False
 
 
 # Base ist die Basisklasse für alle SQLAlchemy-Modelle.
+#Das bedeutet: SQLAlchemy bekommt eine gemeinsame Basis, über die es alle Tabellenmodelle sammelt.
 # Jede Tabellenklasse, z. B. Profile oder Contact, erbt später von Base.
 Base = declarative_base()
 
