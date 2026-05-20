@@ -34,9 +34,10 @@ class User(Base):
 
 # SQLAlchemy-Modell für Passwort-Reset-Codes.
 # Diese Tabelle speichert temporäre Codes, mit denen ein Benutzer sein Passwort zurücksetzen kann.
-#Weil das Backend später prüfen muss, ob der eingegebene Reset-Code wirklich existiert, zum richtigen Benutzer gehört, noch gültig ist und noch nicht benutzt wurde.
+#Weil das Backend später prüfen muss, ob der eingegebene Reset-Code wirklich existiert, zum richtigen Benutzer gehört,
+# noch gültig ist und noch nicht benutzt wurde.
 #Nach erfolgreichem Reset wird der Code als benutzt markiert: is_used = true
-# In dieser Entwicklungs-/Abgabeversion wird der Reset-Code über die API-Response zurückgegeben.
+# In dieser Entwicklungsveversion wird der Reset-Code über die API-Response zurückgegeben.
 # In einer produktiven Version müsste der Code über einen sicheren Kanal zugestellt werden.
 class PasswordResetCode(Base):
     __tablename__ = "password_reset_codes"

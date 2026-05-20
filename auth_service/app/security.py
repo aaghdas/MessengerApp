@@ -65,6 +65,8 @@ def decode_access_token(token: str) -> int | None:
         return None
 
 # Erstellt einen zufälligen numerischen Reset-Code.
+#Erstelle einen sicheren zufälligen 6-stelligen Code und gib ihn als Text zurück.
+#below(900000) erzeugt eine Zufallszahl zwischen 0 und 899999, durch +100000 wird daraus eine Zahl zwischen 100000 und 999999(die zahlen unter 100000 sind 5 stellig), also ein 6-stelliger Code.
 # Der Code wird aktuell für den Passwort-Reset in der Entwicklungs-/Abgabeversion genutzt.
 # Später kann die Zustellung über einen sicheren Kanal ergänzt werden.
 def create_password_reset_code() -> str:

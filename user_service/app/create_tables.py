@@ -34,4 +34,27 @@ password: messenger_dev_123
 \d profiles  # zeigt die Spalten der Tabelle profiles
 \d contacts
 \q  # verlässt die psql-Konsole
+
+\dt
+            List of tables
+ Schema |   Name   | Type  |  Owner   
+--------+----------+-------+----------
+ public | contacts | table | postgres
+ public | profiles | table | postgres
+(2 rows)
+
+ \d profiles
+                                         Table "public.profiles"
+    Column    |            Type             | Collation | Nullable |               Default                
+--------------+-----------------------------+-----------+----------+--------------------------------------
+ id           | integer                     |           | not null | nextval('profiles_id_seq'::regclass)
+ auth_user_id | integer                     |           | not null | 
+ display_name | character varying(100)      |           | not null | 
+ bio          | character varying(255)      |           |          | 
+ avatar_url   | character varying(500)      |           |          | 
+ created_at   | timestamp without time zone |           | not null | 
+Indexes:
+    "profiles_pkey" PRIMARY KEY, btree (id)
+    "ix_profiles_auth_user_id" UNIQUE, btree (auth_user_id)
+    "ix_profiles_id" btree (id)
 """
